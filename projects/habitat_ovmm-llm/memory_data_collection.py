@@ -81,7 +81,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--baseline_config_path",
         type=str,
-        default="projects/habitat_ovmm/configs/agent/memory_collection_single_episode.yaml",
+        default="projects/habitat_ovmm-llm/configs/agent/memory_collection_single_episode.yaml",
         help="Path to config yaml",
     )
     parser.add_argument(

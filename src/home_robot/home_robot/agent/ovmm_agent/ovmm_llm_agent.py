@@ -63,19 +63,19 @@ class OvmmLLMAgent(OpenVocabManipAgent):
         text = clip.tokenize(self.object_names).to(self.device)
         # curr_pose = np.array([obs.gps[0], obs.gps[1], obs.compass[0]])
 
-        # record GT label of if the object has been found
-        if obs.task_observations["object_goal"] in obs.semantic:
-            self.memory[self.timesteps[0]]["is_found"] = True
-
-        for object_id in self.object_of_interest:
+        for i, object_id in enumerate(self.object_of_interest):
             if object_id not in obs.semantic:
                 continue
 
+            # ignore objects that are of very few pixels
             if (
                 self._get_num_goal_pixels(obs, object_id)
                 < self.num_object_pixel_threshold
             ):
                 continue
+
+            # record GT label of if the object has been found
+            self.memory[self.timesteps[0]]["is_found"][i] = True
 
             image_arr = self._segment_goal(obs, object_id)
             image = (
@@ -87,9 +87,9 @@ class OvmmLLMAgent(OpenVocabManipAgent):
                 # text_features = self.model.encode_text(text)
                 logits_per_image, logits_per_text = self.model(image, text)
                 probs = logits_per_image.softmax(dim=-1).cpu().numpy()
-                print(probs)
                 if np.max(probs) > self.clip_threshold:
                     # if True:
+                    print(probs)
                     self._save_image(image_arr, "detected_object.png")
                     print(self.object_names[np.argmax(probs)])
                     print("Label probs:", probs)
@@ -148,7 +148,11 @@ class OvmmLLMAgent(OpenVocabManipAgent):
         if self.object_names is None:
             self.object_names = obs.task_observations["goal_name"].split(" ")
 
-        self.memory[self.timesteps[0]] = {"clip_features": [], "is_found": False}
+        self.memory[self.timesteps[0]] = {
+            "objects": self.object_names,
+            "clip_features": [],
+            "is_found": [False, False, False],
+        }
         if any(ele in obs.semantic for ele in self.object_of_interest):
             print(f"Update robot memory at timestep {self.timesteps[0]}")
             self._update_memory(obs)
