@@ -156,6 +156,7 @@ class OpenVocabManipAgent(ObjectNavAgent):
                 episodes[0].scene_id.split("/")[-1].split(".")[0],
                 episodes[0].episode_id,
             )
+        self.semantic_sensor.set_episode_id(episodes[0].episode_id)
         if self.gaze_agent is not None:
             self.gaze_agent.reset_vectorized()
         if self.nav_to_obj_agent is not None:

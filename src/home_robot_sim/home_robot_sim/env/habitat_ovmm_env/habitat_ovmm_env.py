@@ -161,34 +161,34 @@ class HabitatOpenVocabManipEnv(HabitatEnv):
         )
         obs = self._preprocess_goal(obs, habitat_obs)
         obs = self._preprocess_semantic(obs, habitat_obs)
-        if "robot_head_panoptic" in habitat_obs:
-            gt_instance_ids = np.maximum(
-                0,
-                habitat_obs["robot_head_panoptic"]
-                - self._instance_ids_start_in_panoptic
-                + 1,
-            )[..., 0]
-            # to be used for evaluating the instance map
-            obs.task_observations["gt_instance_ids"] = gt_instance_ids
-            if self.ground_truth_semantics:
-                # populate the instance map
-                obs.task_observations["instance_map"] = gt_instance_ids
+        import cv2, os
+        episode_id = self.get_current_episode().episode_id
+        object_category = habitat_obs["object_category"]
+        object_name = self._obj_id_to_name_mapping[object_category.item()]
+        start_receptacle = habitat_obs["start_receptacle"]
+        start_receptacle_name = self._rec_id_to_name_mapping[start_receptacle.item()]
+        os.makedirs(f"benchmark1/{episode_id}", exist_ok=True)
+        cv2.imwrite(f"benchmark1/{episode_id}/rgb_{object_name}_{start_receptacle_name}.png", obs.rgb[:, :, ::-1])
         return obs
 
     def _preprocess_semantic(
         self, obs: home_robot.core.interfaces.Observations, habitat_obs
     ) -> home_robot.core.interfaces.Observations:
+        semantic = torch.from_numpy(
+            habitat_obs["object_segmentation"].squeeze(-1).astype(np.int64)
+        )
+        recep_seg = torch.from_numpy(
+            habitat_obs["receptacle_segmentation"].squeeze(-1).astype(np.int64)
+        )
+        episode_id = self.get_current_episode().episode_id
+        import cv2, os
+        os.makedirs(f"benchmark1/{episode_id}", exist_ok=True)
+        cv2.imwrite(f"benchmark1/{episode_id}/obj_gt.png", semantic.numpy().astype(np.uint8) * 255)
+        cv2.imwrite(f"benchmark1/{episode_id}/recep_seg_gt.png", recep_seg.numpy().astype(np.uint8) * 255)
+        recep_seg[recep_seg != 0] += 1
+        semantic = semantic + recep_seg
+        semantic[semantic == 0] = len(self._rec_id_to_name_mapping) + 2
         if self.ground_truth_semantics:
-            semantic = torch.from_numpy(
-                habitat_obs["object_segmentation"].squeeze(-1).astype(np.int64)
-            )
-            recep_seg = torch.from_numpy(
-                habitat_obs["receptacle_segmentation"].squeeze(-1).astype(np.int64)
-            )
-
-            recep_seg[recep_seg != 0] += 1
-            semantic = semantic + recep_seg
-            semantic[semantic == 0] = len(self._rec_id_to_name_mapping) + 2
             obs.semantic = semantic.numpy()
             obs.task_observations["recep_idx"] = 2
             obs.task_observations["semantic_max_val"] = (

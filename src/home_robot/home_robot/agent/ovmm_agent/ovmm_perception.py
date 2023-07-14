@@ -81,6 +81,9 @@ class OvmmPerception:
     def current_vocabulary(self) -> RearrangeDETICCategories:
         return self._current_vocabulary
 
+    def set_episode_id(self, episode_id: str):
+        self.episode_id = episode_id
+
     def update_vocubulary_list(
         self, vocabulary: RearrangeDETICCategories, vocabulary_id: int
     ):
@@ -136,5 +139,18 @@ class OvmmPerception:
         obs = self._segmentation.predict(
             obs, depth_threshold=0.5, draw_instance_predictions=self._use_detic_viz
         )
+
         self._process_obs(obs)
+        import cv2
+        import os
+        episode_id = self.episode_id
+        object_category = obs.task_observations["object_name"]
+        start_receptacle = obs.task_observations["start_recep_name"]
+        import numpy as np
+        os.makedirs(f"benchmark1/{episode_id}/detic_ternary", exist_ok=True)
+        obj_seg = (obs.semantic == self.vocabulary_name_to_id[object_category]).astype(np.uint8)
+        rec_seg = (obs.semantic == self.vocabulary_name_to_id[start_receptacle]).astype(np.uint8)
+        cv2.imwrite(f"benchmark1/{episode_id}/detic_ternary/obj.png", obj_seg * 255)
+        cv2.imwrite(f"benchmark1/{episode_id}/detic_ternary/rec.png", rec_seg * 255)
+        print(len(self.vocabulary_name_to_id))
         return obs

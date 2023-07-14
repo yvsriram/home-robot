@@ -64,7 +64,6 @@ if __name__ == "__main__":
         help="Modify config options from command line",
     )
     args = parser.parse_args()
-
     # get habitat config
     habitat_config, _ = get_habitat_config(
         args.habitat_config_path, overrides=args.overrides
@@ -97,4 +96,3 @@ if __name__ == "__main__":
         evaluation_type=args.evaluation_type,
         num_episodes=args.num_episodes,
     )
-    print("Metrics:\n", metrics)
