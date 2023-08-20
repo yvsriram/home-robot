@@ -559,6 +559,12 @@ class GoatAgent(Agent):
         # t3 = time.time()
         # print(f"Planning: {t3 - t2:.2f}")
 
+        if self.current_task_idx == 0 and self.sub_task_timesteps[0][0] >= 50:
+            action = DiscreteNavigationAction.STOP
+
+        if self.current_task_idx > 1:
+            action = DiscreteNavigationAction.STOP
+
         if (
             self.sub_task_timesteps[0][self.current_task_idx]
             >= self.max_steps[self.current_task_idx]

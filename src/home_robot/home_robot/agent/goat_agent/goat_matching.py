@@ -514,6 +514,17 @@ class GoatMatching(Matching):
             :,
             :,
         ]
+        i = 0
+        goal_inst = None
+        instance_goal_found = False
+        for inst_id, instance in self.instance_memory.instance_views[0].items():
+            if instance.category_id > 0:
+                goal_inst = inst_id
+                instance_goal_found = True
+                i += 1
+                if i > -1:
+                    break
+
 
         if goal_inst is not None and instance_goal_found is True:
             goal_map, found_goal, goal_pose = self.get_goal_map_from_goal_instance(
